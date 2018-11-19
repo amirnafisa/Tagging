@@ -39,7 +39,6 @@ def FBdecoder(seq, tag_dict, tags):
             tags_of_prev_word = tags
         else:
             tags_of_prev_word = tag_dict[prev_word][0]
-
         for tag in tags_of_cur_word:
             for prev_tag in tags_of_prev_word:
                 #Log probability
@@ -48,7 +47,6 @@ def FBdecoder(seq, tag_dict, tags):
                 lp = one_count_prob_tt(tag,prev_tag) + one_count_prob_tw(cur_word,tag)
                 #Alternate probability smoothed by ADDL BACKOFF method, Use only one of the three lp equations
                 #lp = get_tr_prob_ALBOFF(tag,prev_tag) + get_em_prob_ALBOFF(cur_word,tag)
-                
                 #If this is the first word of new sentence, restart the mu from 1 (log prob to 0)
                 alpha[tag][i] = lp if prev_word == '###' else logsumexp(alpha[tag][i], alpha[prev_tag][i-1] + lp)
 

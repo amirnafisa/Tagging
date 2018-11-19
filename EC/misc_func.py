@@ -1,6 +1,7 @@
 import sys
 import math
 from collections import defaultdict
+import codecs
 #Global
 orig_count_tt = defaultdict()
 current_count_tt, tag_dict, tags, singleton_tt, singleton_tw = defaultdict(), defaultdict(list), [], [], []
@@ -18,24 +19,32 @@ def parse_args():
 
 #Read the files into some sequences (list of lists, a temporary variable f_data, we will not need these once we calcuate the counts later)
 def load_data(file):
-    with open(file) as f:
-        data = f.read().strip().split('\n')
+
+    f = open(file, 'r')
+    f_data = []
+    seq = None
+    # with open(file, 'r') as f:
+    for line in f:
+        # raw = f.read()
+        # raw = raw.decode("utf-8")
+        # data = f.read().strip().split('\n')
         
-        f_data = []
-        seq = None
-        for line in data:
-            if "###/###" in line:
-                #BOS/EOS
-                if seq:
-                    seq.append(['###','###'])
-                    #Add sequence to f_data - list of all sequences
-                    f_data.extend(seq)
-                    seq = []
-                else:
-                    seq = [['###','###']]
+        
+        # for line in data:
+        if "###/###" in line:
+            #BOS/EOS
+            if seq:
+                seq.append(['###','###'])
+                #Add sequence to f_data - list of all sequences
+                f_data.extend(seq)
+                seq = []
             else:
-                line = line.split('/')
-                seq.append([line[0], line[1]])
+                seq = [['###','###']]
+        else:
+            # print line
+            line_split = line.strip().split('/')
+
+            seq.append([line_split[0], line_split[1]])
     return f_data
 
 def get_tr_str(tagc,tagp):
@@ -279,3 +288,32 @@ def one_count_prob_tw(word, tag):
 
     return math.log(pr)
 
+def get_prunable_tags(thresh):
+    prunable_tags = []
+    remove_word_tag = {}
+    for t in tags:
+        if current_count_tt[t] < thresh:
+            prunable_tags.append(t)
+    #print("Original tags list:",tags,"of length:",len(tags))
+    #print("Number of singletone tags:",len(prunable_tags),":",prunable_tags)
+    for word,val in tag_dict.items():
+        for t in prunable_tags:
+            
+            if t in val[0] and len(val[0]) == 1:
+                prunable_tags.remove(t)
+                remove_word_tag.pop(word,None)
+            elif t in val[0] and len(val[0])>1:
+                if word not in remove_word_tag:
+                    remove_word_tag[word] = t
+                else:
+                    prunable_tags.remove(t)
+                    remove_word_tag.pop(t,None)
+            elif t not in val[0]:
+                remove_word_tag.pop(word,None)
+
+    for t in prunable_tags:
+        for word, val in tag_dict.items():
+            if t in val[0]:
+                tag_dict[word][0].remove(t)
+
+    return prunable_tags, tag_dict

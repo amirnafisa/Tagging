@@ -6,6 +6,7 @@ from misc_fun_em import *
 from vterbi_tagger import *
 from forward_backward import *
 from check_prob import *
+from datetime import datetime as dt
 
 max_epochs = 10
 
@@ -23,10 +24,12 @@ tags = compute_tr_counts(tr_data)
 
 #Compute and store all emission counts in memory
 tag_dict = compute_em_counts(tr_data,raw_data)
+pruned_tag_dict = tag_dict.copy()
 #print("#\n#Tag Dictionary:",tag_dict)
 new_n_tokens = len(raw_data) - 1
+prunable_tags = ()
 for epoch in range(max_epochs):
-
+    #print("#Time:",dt.now())
     #Step 1: Viterbi on test data
     #Get the best path from viterbi decoder
     best_path_tags = decoder(tst_data, tag_dict, tags)
@@ -40,7 +43,7 @@ for epoch in range(max_epochs):
 
     #Step 2: Forward Backward on raw data
     #Get the posterior tags from forward backward decoder
-    posterior_tags, perplexity, new_count_tt = FBdecoder(raw_data, tag_dict, tags)
+    posterior_tags, perplexity, new_count_tt = FBdecoder(raw_data, pruned_tag_dict, tags-set(prunable_tags))
     #print("#\n#Posterior tags from forward backward",posterior_tags)
     
     ############# Output for autograder #############
@@ -53,7 +56,10 @@ for epoch in range(max_epochs):
 
     #Uncomment the following line to check the correctness of the probability
     #check_probability(tags,tag_dict)
-
+    #if epoch == 1 and len(tags) > 10:
+    if epoch == 1:
+        prunable_tags,pruned_tag_dict = get_prunable_tags(40)
+    #prunable_tags = ()
 
 
 #Final decoding after 10 EM iterations

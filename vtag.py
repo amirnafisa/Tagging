@@ -4,7 +4,7 @@ import sys
 from misc_func import *
 from vterbi_tagger import *
 from forward_backward import *
-
+from check_prob import *
 tr_file, tst_file = parse_args()
 
 tr_data = load_data(tr_file)
@@ -19,6 +19,9 @@ tags = compute_tr_counts(tr_data)
 tag_dict = compute_em_counts(tr_data)
 #print("#\n#Tag Dictionary:",tag_dict)
 
+#Check for probabilities (conditional probabilities sum to 1 property)
+#check_probability(tags,tag_dict)
+
 #Get the best path from viterbi decoder
 best_path_tags = decoder(tst_data, tag_dict, tags)
 #print("#\n#Best path tags",best_path_tags)
@@ -30,7 +33,7 @@ accuracy, known_accuracy, novel_accuracy = compute_accuracy(best_path_tags,tst_d
 print("Tagging accuracy (Viterbi decoding):\t%2.2f%% (known:\t%2.2f%% novel:\t%2.2f%%)"%(100*accuracy, 100*known_accuracy,100*novel_accuracy))
 
 #Get the posterior tags from forward backward decoder
-posterior_tags, _ = FBdecoder(tst_data, tag_dict, tags)
+posterior_tags, _, _ = FBdecoder(tst_data, tag_dict, tags)
 #print("#\n#Posterior tags from forward backward",posterior_tags)
 
 #Compute all accuracies, return format: 0.89 (for 89%)
